@@ -118,6 +118,9 @@ class modAttendanceSystem extends DolibarrModules
                 $r++;
                 $this->const[$r] = array("ATTENDANCE_ROUND", "int", "3", "round timespend display in day");// hours or days
                 $r++;
+                $this->const[$r] = array("ATTENDANCE_CLEAR_EVENT", "int", "1", "clear the attendance after fetching them");// hours or days
+                $r++;
+                
                                  //$this->const[2] = array("CONST3", "chaine", "valeur3", "Libelle3");
                 // Array to add new pages in new tabs
                 // Example: $this->tabs = array('objecttype:+tabname1:Title1:mylangfile@attendanceSystem:$user->rights->attendanceSystem->read:/attendanceSystem/mynewtab1.php?id=__ID__',        // To add a new tab identified by code tabname1

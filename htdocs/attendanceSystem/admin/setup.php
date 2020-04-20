@@ -68,7 +68,9 @@ switch($action) {
         $maxhoursperday = getpost('maxhoursperday', 'int');
         dolibarr_set_const($db, "ATTENDANCE_DAY_MAX_DURATION", $maxhoursperday, 'int', 0, '', $conf->entity);
         $tsRound = getpost('tsRound', 'int');
-        dolibarr_set_const($db, "TIMESHEET_ROUND", $tsRound, 'int', 0, '', $conf->entity);
+        dolibarr_set_const($db, "ATTENDANCE_ROUND", $tsRound, 'int', 0, '', $conf->entity);
+        $clrAttendance = getpost('clrAttendance', 'int');
+        dolibarr_set_const($db, "ATTENDANCE_CLEAR_EVENT", $clrAttendance, 'int', 0, '', $conf->entity);
        
         break;
     default:
@@ -124,6 +126,13 @@ echo '<tr class = "oddeven" ><td align = "left">'.$langs->trans("tsRound");
 echo '</td><td align = "left">'.$langs->trans("tsRoundDesc").'</td>';
 echo '<td  align = "left"><input type = "text" name = "tsRound" value = "'.$tsRound;
 echo "\" size = \"4\" ></td></tr>\n\t\t";
+
+// clear attendance
+echo  '<tr class = "oddeven"><td align = "left">'.$langs->trans("ClrAttendance");
+echo '</td><td align = "left">'.$langs->trans("ClrAttendanceDesc").'</td>';
+echo  '<td align = "left"><input type = "checkbox" name = "clrAttendance" value = "1" ';
+echo (($clrAttendance == '1')?'checked':'')."></td></tr>\n\t\t";
+
 
 llxFooter();
 $db->close();

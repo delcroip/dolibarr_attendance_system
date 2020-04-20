@@ -700,18 +700,17 @@ class AttendanceSystem extends CommonObject
      *  @param int  $mode       simple import or creation of attendanceSystem   
      *  @param path $file       path to an excel to import
      */
-    function importEvent($mode, $file = ''){
+    function importEvent(){
+        global $conf;
         # connect to the attendance system or manage the file
         $attendance = array();
-        if( $file != ''){
-            
-        }else if(lenght($this->ip)>6){
+        if(preg_match("/^(\d{1,3}\.){3}\d{1,3}/", $this->ip)){
             $zkteco = new ZKLibrary($this->ip, $this->port);
             if (is_numeric($zkteco->ping()) && $zkteco->connect()){
                 # retrive event
                 $zkteco->disableDevice();
                 $attendance = $zkteco->getAttendance(); // array($uid, $id, $state, $timestamp)
-                $zkteco->clearAttendance();
+                if($conf->global->ATTENDANCE_CLEAR_EVENT)$zkteco->clearAttendance();
                 // upload finished, disconnect
                 $zkteco->enableDevice();
                 $zkteco->disconnect();
@@ -819,9 +818,10 @@ class AttendanceSystem extends CommonObject
             $attendanceUser = new AttendanceSystemUser($this->db);
             if(is_array($EventArray) && count($EventArray)>0){
                 foreach($EventArray as $key => $ZKEvent){
-                    $ZKEvent = new AttendanceSystemEvent($this->db);
+                    $Event = new AttendanceSystemEvent($this->db);
                     if ($prevUid != $ZKEvent['uid']) $curUser = $attendanceUser->fetchAsUser($this->id, $ZKEvent['uid']);//FIXME need to check that the user is uid
-                    $res[] = $ZKEvent->loadZKEvent($this->id,  $this->status, $curUser, $ZKEvent);
+                    //$fk_attendance_system, $event_type, $as_user, $ZKEvent
+                    $res[] = $Event->loadZKEvent($this->id,  $this->status, $curUser, $ZKEvent);
                     $prevUid = $ZKEvent['uid'];
                 }
                 if (min($res)<0) return  $res;
