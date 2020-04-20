@@ -85,7 +85,7 @@ class AttendanceSystemUserLink extends CommonObject
 
 		// Clean parameters
         $this->cleanParam();
-
+        if($this->fetchDuplicate()>0)  return 1;
 		// Check parameters
 		// Put here code to add control on parameters values
 
@@ -103,7 +103,7 @@ class AttendanceSystemUserLink extends CommonObject
 
         
         $sql .= ")";
-
+        
         $this->db->begin();
 
         dol_syslog(__METHOD__, LOG_DEBUG);
@@ -194,6 +194,33 @@ class AttendanceSystemUserLink extends CommonObject
         }
     }
 
+        /**
+     *  Look for duplicate
+     *  @return int          	<0 if KO, >0 if OK
+     */
+    function fetchDuplicate()
+    {
+        $error = 0;
+        $sql = "SELECT rowid FROM ".MAIN_DB_PREFIX.$this->table_element;;
+        $sql .= " WHERE ";
+		$sql .= ' fk_attendance_system '.(empty($this->attendance_system)?'is NULL':"= '".$this->attendance_system."'").' AND ';
+		$sql .= ' fk_attendance_system_user '.(empty($this->attendance_system_user)?'is NULL':"= '".$this->attendance_system_user."'");
+        $sql .= " LIMIT 1 ";
+		dol_syslog(__METHOD__, LOG_DEBUG);
+        $resql = $this->db->query($sql);
+        if ($resql && $this->db->num_rows($resql)>0)
+        {
+            $obj = $this->db->fetch_object($resql);
+            $this->id = $obj->rowid;
+            $this->db->free($resql);
+            return 1;
+        }else
+        {
+      	    $this->error="Error ".$this->db->lasterror();
+            return -1;
+        }
+
+    }
 
     /**
      *  Update object into database
