@@ -104,10 +104,10 @@ class AttendanceSystemEvent extends CommonObject
         $sql .= 'fk_attendance_event,';
         $sql .= 'fk_user,';
         $sql .= 'event_type,';
-		$sql .= 'status';
+		$sql .= 'status,';
 		$sql .= 'state';
         
-        $sql .= ") VALUES (";
+        $sql .= ") SELECT ";
         
 		$sql .= ' '.(empty($this->date_time_event) || dol_strlen($this->date_time_event) == 0?'NULL':"'".$this->db->idate($this->date_time_event)."'").',';
 		$sql .= ' '.(empty($this->attendance_system)?'NULL':"'".$this->attendance_system."'").',';
@@ -115,9 +115,18 @@ class AttendanceSystemEvent extends CommonObject
         $sql .= ' '.(empty($this->attendance_event)?'NULL':"'".$this->attendance_event."'").',';
         $sql .= ' '.(empty($this->user)?'NULL':"'".$this->user."'").',';
         $sql .= ' '.(empty($this->event_type)?'1':"'".$this->event_type."'").',';
-		$sql .= ' '.(empty($this->status)?'NULL':"'".$this->status."'").'';
+		$sql .= ' '.(empty($this->status)?'NULL':"'".$this->status."'").',';
 		$sql .= ' '.(empty($this->state)?'NULL':"'".$this->state."'").'';
-        
+        if($this->db->type!='mysql')$sql .= ' FROM DUAL ';
+        $sql .= ' WHERE NOT EXISTS (SELECT rowid FROM '.MAIN_DB_PREFIX.$this->table_element.' WHERE';
+		$sql .= ' date_time_event '.(empty($this->date_time_event) || dol_strlen($this->date_time_event) == 0?'is NULL':"= '".$this->db->idate($this->date_time_event)."'").' AND ';
+		$sql .= ' fk_attendance_system '.(empty($this->attendance_system)?'is NULL':"= '".$this->attendance_system."'").' AND ';
+        $sql .= ' fk_attendance_system_user '.(empty($this->attendance_system_user)?'is NULL':"= '".$this->attendance_system_user."'").' AND ';
+        $sql .= ' fk_attendance_event '.(empty($this->attendance_event)?'is NULL':"= '".$this->attendance_event."'").' AND ';
+        $sql .= ' fk_user '.(empty($this->user)?'is NULL':"= '".$this->user."'").' AND ';
+        $sql .= ' event_type ='.(empty($this->event_type)?'1':"'".$this->event_type."'").' AND ';
+		$sql .= ' status '.(empty($this->status)?'is NULL':"= '".$this->status."'").' AND ';
+		$sql .= ' state '.(empty($this->state)?'is NULL':"= '".$this->state."'").'';
         $sql .= ")";
 
         $this->db->begin();
