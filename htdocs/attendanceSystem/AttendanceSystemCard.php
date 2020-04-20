@@ -223,12 +223,12 @@ switch($action) {
             AttendanceSystemReloadPage($backtopage, 0, '');
          break;
          case 'get_user':
-            $result = $object->getUsers($user); //uid,string name,int role, string passwd
+            $result = $object->getUsers(); //uid,string name,int role, string passwd
             //echo 'result:';
             //var_dump($result);
             if($result > 0) {
                 // get user  OK
-                $result2 = $object->loadAttendanceUserFromArray( $result);
+                $result2 = $object->loadAttendanceUserFromArray($result);
                 if($result2 > 0) {
                     setEventMessage($langs->trans('UserRetrieved'), 'mesgs');
                 }else{
@@ -242,9 +242,10 @@ switch($action) {
             $action = "view"; 
          break;
          case 'get_time':
-            $result = $object->importEvent($user);
+            $result = $object->importEvent();
             if($result > 0) {
-                $result2 = loadAttendanceUserEventFromArray($object->ip, $object->third_party, $object->project, $object->task, $result);
+                $result2 = $object->loadAttendanceUserEventFromArray( $result);
+                echo 'tadda';
                 if($result2 > 0) {
                     setEventMessage($langs->trans('EventRetrieved'), 'mesgs');
                 }else{
