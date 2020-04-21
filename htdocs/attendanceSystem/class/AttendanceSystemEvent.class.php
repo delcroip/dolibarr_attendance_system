@@ -190,7 +190,7 @@ class AttendanceSystemEvent extends CommonObject
         $sql .= ' t.fk_attendance_event,';
         $sql .= ' t.fk_user,';
         $sql .= ' t.event_type,';
-		$sql .= ' t.status';
+		$sql .= ' t.status,';
 		$sql .= ' t.state';
 
         

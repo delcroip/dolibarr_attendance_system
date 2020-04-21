@@ -819,10 +819,10 @@ class AttendanceSystem extends CommonObject
             if(is_array($EventArray) && count($EventArray)>0){
                 foreach($EventArray as $key => $ZKEvent){
                     $Event = new AttendanceSystemEvent($this->db);
-                    if ($prevUid != $ZKEvent['uid']) $curUser = $attendanceUser->fetchAsUser($this->id, $ZKEvent['uid']);//FIXME need to check that the user is uid
+                    if ($prevUid != $ZKEvent['id']) $curUser = $attendanceUser->fetchAsUser($this->id, $ZKEvent['id']);//FIXME need to check that the user is uid
                     //$fk_attendance_system, $event_type, $as_user, $ZKEvent
                     $res[] = $Event->loadZKEvent($this->id,  $this->status, $curUser, $ZKEvent);
-                    $prevUid = $ZKEvent['uid'];
+                    $prevUid = $ZKEvent['id'];
                 }
                 if (min($res)<0) return  $res;
                 else return OK;

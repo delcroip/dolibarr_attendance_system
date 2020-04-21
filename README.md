@@ -40,4 +40,6 @@ Module to import event from ZKteco system and create tasktime from it
 
 
 # Next developement for other release
+- support multicompany
+- generate default task for project and third parties and fetch them automatically with AttendanceSystem->GetTask().
 

@@ -120,3 +120,4 @@ Add time on task
 ================
 
 if order to add time spent a task need to be specified, because the relationship of the task with the project is required. 
+the first version of the module will require a task but later version should generate default task for the thirdparties (event is the project module is not activated) and project 

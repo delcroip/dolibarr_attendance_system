@@ -245,7 +245,6 @@ switch($action) {
             $result = $object->importEvent();
             if($result > 0) {
                 $result2 = $object->loadAttendanceUserEventFromArray( $result);
-                echo 'tadda';
                 if($result2 > 0) {
                     setEventMessage($langs->trans('EventRetrieved'), 'mesgs');
                 }else{

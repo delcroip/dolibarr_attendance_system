@@ -41,7 +41,7 @@ if (! $res && file_exists($currentTimesheetPath."/../../../../../main.inc.php"))
 }
 if (! $res) die("Include of main fails") ;
 
-if ($user->admin && version_compare("4.1", $conf->global->TIMESHEET_VERSION) > 0){
+if ($user->admin && version_compare("0.0", $conf->global->ATTENDANCE_VERSION) > 0){
     setEventMessage("Version of attendanceSystem updated, please deactivate then reactivate the module", 'warnings');
 }
 // return from functions

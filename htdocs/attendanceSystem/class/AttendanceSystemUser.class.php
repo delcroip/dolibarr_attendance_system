@@ -770,14 +770,13 @@ class AttendanceSystemUser extends CommonObject
         $sql .= " JOIN ".MAIN_DB_PREFIX.'attendance_system_user_link AS asul';
 		$sql .= ' ON  asu.rowid = asul.fk_attendance_system_user';
         $sql .= " AND  asul.fk_attendance_system = ".$fk_attendance_system;
-		$sql .= ' WHERE asu.as_uid = '.$fk_attendance_system;
+		$sql .= ' WHERE asu.as_uid = '.$user_as_id;
         $sql .= " LIMIT 1 ";
 		dol_syslog(__METHOD__, LOG_DEBUG);
         $resql = $this->db->query($sql);
         if ($resql && $this->db->num_rows($resql)>0)
         {
             $obj = $this->db->fetch_object($resql);
-            
             if (isset($obj->rowid)){
                 $ret = $obj->rowid;;
             }else{
