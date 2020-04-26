@@ -29,7 +29,7 @@ if(!$user->admin) {
     $accessforbidden = accessforbidden("you need to be admin");
 }
 $action = getpost('action', 'alpha');
-$hoursperday = $conf->global->ATTENDANCE_DAY_DURATION;
+$minbreak = $conf->global->ATTENDANCE_MIN_OVERDAY_BREAK;
 
 //hide/show
 $maxhoursperday = $conf->global->ATTENDANCE_DAY_MAX_DURATION;
@@ -67,11 +67,12 @@ switch($action) {
         dolibarr_set_const($db, "ATTENDANCE_EVENT_DEFAULT_DURATION", $defaulthoursperevent, 'int', 0, '', $conf->entity);
         $maxhoursperday = getpost('maxhoursperday', 'int');
         dolibarr_set_const($db, "ATTENDANCE_DAY_MAX_DURATION", $maxhoursperday, 'int', 0, '', $conf->entity);
+        $minbreak = getpost('minBreak', 'int');
+        dolibarr_set_const($db, "ATTENDANCE_MIN_OVERDAY_BREAK", $minbreak, 'int', 0, '', $conf->entity);
         $tsRound = getpost('tsRound', 'int');
         dolibarr_set_const($db, "ATTENDANCE_ROUND", $tsRound, 'int', 0, '', $conf->entity);
         $clrAttendance = getpost('clrAttendance', 'int');
         dolibarr_set_const($db, "ATTENDANCE_CLEAR_EVENT", $clrAttendance, 'int', 0, '', $conf->entity);
-       
         break;
     default:
         break;
@@ -83,6 +84,7 @@ switch($action) {
 //permet d'afficher la structure dolibarr
 //$morejs = array("/attendanceSystem/core/js/attendanceSystem.js?".$conf->global->ATTENDANCE_VERSION, "/attendanceSystem/core/js/jscolor.js");
 llxHeader("", $langs->trans("attendanceSystemSetup"), '', '', '', '', $morejs, '', 0, 0);
+if($action = "save")echo "<script>window.history.pushState('', '', '".explode('?', $_SERVER['REQUEST_URI'], 2)[0]."');</script>";
 $linkback = '<a href = "'.DOL_URL_ROOT.'/admin/modules.php">'.$langs->trans("BackToModuleList").'</a>';
 print_fiche_titre($langs->trans("attendanceSystemSetup"), $linkback, 'title_setup');
 echo '<div class = "fiche"><br><br>';
@@ -90,8 +92,7 @@ echo '<div class = "fiche"><br><br>';
 /*
  * General
  */
-echo '<div id = "General" class = "tabBar">';
-print '<a>'.$langs->trans("GeneralTabDesc").'</a>';
+
 print_titre($langs->trans("GeneralOption"));
 echo '<form name = "settings" action="?action=save" method = "POST" >'."\n\t";
 echo '<table class = "noborder" width = "100%">'."\n\t\t";
@@ -103,6 +104,12 @@ echo $langs->trans("Description").'</th><th width = "100px">'.$langs->trans("Val
 echo '<tr class = "oddeven"><td align = "left">'.$langs->trans("maxhoursperdays");//FIXTRAD
 echo '</td><td align = "left">'.$langs->trans("maxhoursPerDaysDesc").'</td>';// FIXTRAD
 echo '<td align = "left"><input type = "text" name = "maxhoursperday" value = "'.$maxhoursperday;
+echo "\" size = \"4\" ></td></tr>\n\t\t";
+
+//min break hours 
+echo '<tr class = "oddeven"><td align = "left">'.$langs->trans("minBreak");//FIXTRAD
+echo '</td><td align = "left">'.$langs->trans("minBreakDesc").'</td>';// FIXTRAD
+echo '<td align = "left"><input type = "text" name = "minBreak" value = "'.$minbreak;
 echo "\" size = \"4\" ></td></tr>\n\t\t";
 
 //min hours per event
@@ -133,6 +140,8 @@ echo '</td><td align = "left">'.$langs->trans("ClrAttendanceDesc").'</td>';
 echo  '<td align = "left"><input type = "checkbox" name = "clrAttendance" value = "1" ';
 echo (($clrAttendance == '1')?'checked':'')."></td></tr>\n\t\t";
 
+echo '</table><input type = "submit" class = "butAction" value = "'.$langs->trans('Save')."\">\n</from>";
+echo '<br><br><br>';
 
 llxFooter();
 $db->close();

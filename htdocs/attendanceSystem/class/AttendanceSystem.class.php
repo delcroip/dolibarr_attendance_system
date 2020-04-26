@@ -131,8 +131,8 @@ class AttendanceSystem extends CommonObject
 		$sql .= ' '.(empty($this->serial_nb)?'NULL':"'".$this->serial_nb."'").',';
 		$sql .= ' '.(empty($this->zone)?'NULL':"'".$this->zone."'").',';
 		$sql .= ' '.(empty($this->passwd)?'NULL':"'".$this->db->escape($this->passwd)."'").',';
-		$sql .= ' '.(empty($this->status)?'NULL':"'".$this->status."'").',';
-		$sql .= ' '.(empty($this->mode)?'NULL':"'".$this->mode."'").'';
+		$sql .= ' '.(empty($this->status)?'0':"'".$this->status."'").',';
+		$sql .= ' '.(empty($this->mode)?'0':"'".$this->mode."'").'';
 
         
         $sql .= ")";
@@ -391,7 +391,7 @@ class AttendanceSystem extends CommonObject
 		global $langs, $attendancesystemStatusPictoArray, $attendancesystemStatusArray;
 		if ($mode == 0)
 		{
-			$prefix = '';
+            $prefix = '';
 			return $langs->trans($attendancesystemStatusArray[$status]);
 		}
 		if ($mode == 1)

@@ -141,13 +141,17 @@ if($cancel) {
 	$object->ip = GETPOST('Ip');
 	$object->port = GETPOST('Port');
 	$object->note = GETPOST('Note');
-	$object->third_party = GETPOST('Thirdparty');
-    $object->task = (GETPOST('Task') == '-1')?'':GETPOST('Task');
-	$object->project = GETPOST('Project');
+    $object->third_party = GETPOST('Thirdparty');
+    if($object->third_party == -1) $object->third_party = null;
+    $object->task = GETPOST('Task', 'int');
+    if($object->task == -1) $object->task = null;
+    $object->project = GETPOST('Project');
+    if($object->project == -1) $object->project = null;
 	$object->serial_nb = GETPOST('Serialnb');
 	$object->zone = GETPOST('Zone');
 	$object->passwd = GETPOST('Passwd');
-	$object->status = GETPOST('Status');
+    $object->status = GETPOST('Status');
+    if($object->status == null) $object->status = 0;
 	$object->mode = GETPOST('Mode');
 		// test here if the post data is valide
  /*
@@ -487,7 +491,7 @@ switch($action) {
         if($edit == 1) {
             print $object->selectLibStatut($form);
         } else{
-            print $object->libStatut($object->status);
+            print $object->getLibStatut();
         }
         print "</td>";
         print "\n</tr>\n";

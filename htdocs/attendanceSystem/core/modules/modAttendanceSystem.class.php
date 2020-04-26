@@ -106,15 +106,17 @@ class modAttendanceSystem extends DolibarrModules
                 $this->const = array();
                 $this->const[$r] = array("ATTENDANCE_VERSION", "chaine", $this->version, "save the attendanceSystem verison");// hours or days
                 $r++;
-                $this->const[$r] = array("ATTENDANCE_DAY_DURATION", "int", 8, "number of hour per day(used for the layout per day)");
-                $r++;
-                $this->const[$r] = array("ATTENDANCE_DAY_MAX_DURATION", "int", 12, "max working hours per days");
+//                $this->const[$r] = array("ATTENDANCE_DAY_DURATION", "int", 8, "number of hour per day(used for the layout per day)");
+//                $r++;
+                $this->const[$r] = array("ATTENDANCE_DAY_MAX_DURATION", "int", 30, "maximum time for a day of 1 person 30 means that a day of work can finish at 6 the next day ");
+                $r++;               
+                $this->const[$r] = array("ATTENDANCE_MIN_OVERDAY_BREAK", "int", 12, "if two event have a bigger time distance then they wonn't be considred together");
                 $r++;
                 $this->const[$r] = array("ATTENDANCE_EVENT_MAX_DURATION", "int", 8, "max event duration");// hours or days
                 $r++;
                 $this->const[$r] = array("ATTENDANCE_EVENT_DEFAULT_DURATION", "int", 2, "default event duration");// hours or days
                 $r++;
-                $this->const[$r] = array("ATTENDANCE_EVENT_MIN_DURATION", "int", "0", "minimum time per chrono");// hours or days
+                $this->const[$r] = array("ATTENDANCE_EVENT_MIN_DURATION", "int", 15, "minimum time (second) per event (to manage double entries)");// hours or days
                 $r++;
                 $this->const[$r] = array("ATTENDANCE_ROUND", "int", "3", "round timespend display in day");// hours or days
                 $r++;

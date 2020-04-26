@@ -704,23 +704,25 @@ class AttendanceSystemEvent extends CommonObject
 
     /**
     *  function to generate event from system event.
-    *  @result int OK/KO
+    *  @result int array(events => nbEvents, array(userid => array(events => nbEvents, )))
     */
     function parseSystemEvent(){
         $arrayEvent = fetchUnlinkedSystemEvent();
         $ret = array();
         //loop for all user
-        if(is_array($arrayEvent))foreach($arrayEvent as $userid => $userEvent){
+        if(is_array($arrayEvent))foreach($arrayEvent as $userid => $userEvent){;
             //loop for all event
-            if(is_array($userEvent))foreach($userEvent as $userid => $Event){
-                $userDayList = splitByDay($Event);
-                //loop for all the day found
-                if(is_array($userDayList))foreach($userDayList as $userDay){
-                    $ret[] = parseDaySystemEvent($userDay);
-                }
+            $userDayList = splitByDay($userEvent);
+            
+            //loop for all the day found
+            if(is_array($userDayList))foreach($userDayList as $userDay){
+                $retDay = parseDaySystemEvent($userDay);
+                $ret['ok'] += $retDay['ok'];
+                $ret['ko'] += $retDay['ko'];
             }
-        }
 
+        }
+        return $ret;
     }
 
     /**
@@ -738,27 +740,28 @@ class AttendanceSystemEvent extends CommonObject
         $DayEvent = array();
         $day = 1;
         foreach ($EventArray as $event){
+            //echo "Event:";
+            //var_dump($event);
+            //echo "<br>";
             //if there is no event in the day or only one
+            $dateEvent = new DateTime($event['date_time_event']);
             if (count($DayEvent[$day]) < 2){
-                $date = $event['date_time_event'];
-                $fristEvent = $event['date_time_event'];
+                $fristEventDate = new DateTime($event['date_time_event']);
+                $date = $dateEvent;
                 $date->setTime(0,0);
-            }
-            $diffE2E = date_diff($fristEvent, $event['date_time_event']);
-            // ensure that the 2 consecutives event are not too distant
-            if($diffE2E < $conf->global->ATTENDANCE_MIN_OVERDAY_BREAK){
-                $diffE2D = date_diff($date, $event['date_time_event']);
+            }else{ 
+                // ensure that the 2 consecutives event are not too distant
                 // ensure that the nex event is not too far int the next day
-                if($diffE2D <  $conf->global->ATTENDANCE_MAX_DAY_SPAN){
-                    $DayEvent[$day] = $event;
-                }else{
+                if( ($dateEvent->format('U') - $fristEventDate->format('U') 
+                    > ($conf->global->ATTENDANCE_MIN_OVERDAY_BREAK * 3600)) 
+                    || $date->format('U') - $fristEventDate->format('U')
+                    > ($conf->global->ATTENDANCE_DAY_MAX_DURATION * 3600)){
                     $day++;
                 }
-            }else{
-                $day++;
             }
-            $DayEvent[$day] = $event;
-        }
+            $DayEvent[$day][] = $event;
+        }    
+        return   $DayEvent; 
     }
 
 
@@ -770,8 +773,10 @@ class AttendanceSystemEvent extends CommonObject
     */
     function parseDaySystemEvent($EventArray){
         global $conf, $db,$user;
+        $ret = 0;
         $inEvent = null; // 0 for in, 1 for out
         $prevEvent = null;
+        $prevPrevEvent = null;
         $totalError = 0;
         $status = 0;
         $nbrEvent = count($EventArray);
@@ -781,61 +786,78 @@ class AttendanceSystemEvent extends CommonObject
             $status = 0;
             $prevStatus = 0;
             $nbrEvent = (count($EventArray) - $totalError)%2;
-            $durlast = ($prevEvent == null)?
-                $conf->global->TIMESHEET_EVENT_MIN_DURATION:
-                date_diff($prevEvent['date_time_event'], $event['date_time_event']);
+            // time between events in second
+            $durlast = ($prevEvent == null)?($conf->global->ATTENDANCE_EVENT_MIN_DURATION)
+                        :(strtotime($event['date_time_event'])
+                        - strtotime($prevEvent['date_time_event']));
             if($inEvent == null){
                 //event type 1-->'heartbeat', 'sign-in', 'sign-out', 'access'
                 if ($event['event_type'] == 3){ //out event cannot count as in event
                     $status = ($prevEvent == null)?3:4; // Error single if first in the day else double
-                }elseif ($event['event_type'] == 1 //event
+                }elseif ($event['event_type'] == 1 && $prevEvent != null//event
                     && (count($EventArray) - $totalError)%2 == 1 //odd number of valid event
-                    && $durlast < $conf->global->TIMESHEET_EVENT_MIN_DURATION){
-                       $status = 1; // in
-                       $prevStatus = 4; //errorDouble
+                    && $durlast >= $conf->global->ATTENDANCE_EVENT_MIN_DURATION){
+                        $status = 4; // in
+                        //$prevStatus = 4; //errorDouble
+                }else{
+                    $status = 1; // in
                 }
             }else{
-                $dur = date_diff($inEvent['date_time_event'], $event['date_time_event']);
+                $dur = (strtotime($event['date_time_event'])
+                - strtotime($inEvent['date_time_event']));
                 if ($event['event_type'] == 2){ //Signin, save the second one as error the first one as out
                     $status = 4; // in
                     $prevStatus = 1; // error
+                }elseif ($event['event_type'] == 1//event
+                && (count($EventArray) - $totalError)%2 == 1 //odd number of valid event
+                && $durlast < $conf->global->ATTENDANCE_EVENT_MIN_DURATION){
+                    $status = 1; // in
+                    $prevStatus = 4; //errorDouble
                 }else if ($event['event_type'] < 1 || $event['event_type'] > 3 ){ // in case the access event come into the picture
                     $status = 3; // error single
-                }elseif ($dur > $conf->global->TIMESHEET_EVENT_MIN_DURATION  // duration more than min
-                        && $dur < $conf->global->TIMESHEET_EVENT_MAX_DURATION){ // duration less that may
-                    GenerateAttendanceEvent($inEvent, $event);
+                }elseif ($dur >= ($conf->global->ATTENDANCE_EVENT_MIN_DURATION)  // duration more than min
+                        && $dur < ($conf->global->ATTENDANCE_EVENT_MAX_DURATION * 3600)){ // duration less that may
+                    if(createTimeSpend($inEvent, $event)>0)$ret++;
                     $status = 2; // out
-                }else{
+
+                }else if($event['event_type'] == 3){
                     $status = 6; // errorout
                     $prevStatus = 5; //error in
-                }
-                if($status == 1){
-                    $inEvent = $event;
-                    $prevEvent = $event;
-                }elseif($status == 2){
-                    $prevEvent = $event;
-                    $inEvent = null;
                 }else{
-                    $nbrEvent -= 1;
-                    if ($prevStatus > 0){
-                        if($prevStatus == 1){
-                            $inEvent = $prevEvent;
-                        }elseif($prevStatus == 2){
-                            $inEvent = null;
-                        }else{
-                            $nbrEvent -= 1;
-                        }
-                        $staticObject->loadFromArray($prevEvent);
-                        $staticObject->status = $prevStatus; // errorIn
-                        $staticObject->update($user);
-                    }
+                    $status = 1; // errorout
+                    $prevStatus = 3; //error in
                 }
-                $staticObject->loadFromArray($event);
-                $staticObject->status = $status; // errorIn
-                $staticObject->update($user);
             }
+            if($status == 1){
+                $inEvent = $event;
+                $prevEvent = $event;
+            }elseif($status == 2){
+                $prevEvent = $event;
+                $inEvent = null;
+            }elseif($status == 6){
+                $prevEvent = $event;
+                $inEvent = $event;
+            }else{
+                $nbrEvent -= 1;
+                if ($prevStatus > 0){
+                    if($prevStatus == 1){
+                        $inEvent = $prevEvent;
+                    }elseif($prevStatus == 2){
+                        $inEvent = null;
+                    }else{
+                        $nbrEvent -= 1;
+                    }
+                    $staticObject->loadFromArray($prevEvent);
+                    $staticObject->status = $prevStatus; // errorIn
+                    $staticObject->update($user);
+                }
+            }
+            $staticObject->loadFromArray($event);
+            $staticObject->status = $status; // errorIn
+            $staticObject->update($user);
+            
         }
-        return $nbrEvent;
+        return array('ko' => count($EventArray) - $ret * 2, 'ok' => $ret * 2);
     }
     
     /**
@@ -848,23 +870,24 @@ class AttendanceSystemEvent extends CommonObject
         $error = 0;
         $ret = array();
         $sql = "SELECT ase.rowid, ase.date_time_event, ase.fk_attendance_system,";
-        $sql .= "  ase.attendance_system_user, asu.fk_user,";
+        $sql .= "  ase.fk_attendance_system_user, asu.fk_user,";
         $sql .= "  ase.event_type, ase.status, ase.state";
         $sql .= " FROM ".MAIN_DB_PREFIX.'attendance_system_event AS ase';
         $sql .= ' JOIN '.MAIN_DB_PREFIX.'attendance_system_user AS asu';
         $sql .= ' ON ase.fk_attendance_system_user = asu.rowid';
-        $sql .= ' WHERE ase.fk_attendance_event = NULL';
-        $sql .= ' AND ase.event_type > 4'; // don't take access event
-        $sql .= ' ORDER BY asu.fk_user = NULL DESC';
+        $sql .= ' WHERE ase.fk_attendance_event is NULL';
+        $sql .= ' AND ase.event_type < 4'; // don't take access event
+        $sql .= ' AND asu.fk_user is not NULL'; // don't take access event
+        $sql .= ' ORDER BY asu.fk_user DESC';
         $sql .= ' , ase.date_time_event ASC';
 		dol_syslog(__METHOD__, LOG_DEBUG);
         $resql = $db->query($sql);
         if ($resql)
         {
-            $num = $this->db->num_rows($resql);
+            $num = $db->num_rows($resql);
 
             for($i = 0; $i < $num; $i++){
-                $obj = $this->db->fetch_object($resql);
+                $obj = $db->fetch_object($resql);
                 $ret[$obj->fk_user][$i] = array();
                 $ret[$obj->fk_user][$i]['id'] = $obj->rowid;
                 $ret[$obj->fk_user][$i]['date_time_event'] = $obj->date_time_event;
@@ -875,11 +898,11 @@ class AttendanceSystemEvent extends CommonObject
                 $ret[$obj->fk_user][$i]['state'] = $obj->state;
             }
 
-            $this->db->free($resql);
+            $db->free($resql);
 
         }else
         {
-      	    $this->error="Error ".$this->db->lasterror();
+      	    $error="Error ".$db->lasterror();
             $ret = NOK;
         }
         return $ret;
@@ -894,7 +917,7 @@ class AttendanceSystemEvent extends CommonObject
  function createTimeSpend($evenIn,$evenOut)
 {
     global $db,$user;
-    $duration = date_diff($evenIn['date_time_event'],$evenOut['date_time_event']);
+    $duration = strtotime($evenOut['date_time_event']) - strtotime($evenIn['date_time_event']);
     if(empty($token))$token = getToken();
     $asu = New AttendanceSystemUser($db);
     $asu->fetch($evenIn['attendance_system_user']);
@@ -902,14 +925,16 @@ class AttendanceSystemEvent extends CommonObject
     $asIn->fetch($evenIn['attendance_system']); 
     $asOut = New AttendanceSystem($db);
     $asOut->fetch($evenOut['attendance_system']); 
-    $task = new Task($this->db);
+    $task = new Task($db);
     $task->id = $asIn->getTask();
     $task->timespent_duration = $duration;
     $task->timespent_date = strtotime('midnight',$evenIn['date_time_event']);
     if(isset($task->timespent_datehour)) { //support old dolibarr
         $task->timespent_date_hour = $evenIn['date_time_event'];
     }
-    $task->timespent_note = 'Logging in: '.$asIn->getLabel()."\n Logging out: ".$asOut->getLabel();
-    $newId = $this->addTimeSpent($user, 0);
+    $task->timespent_fk_user = $asu->user;
+    $task->timespent_note = "Logging in: ".$asIn->getLabel()." Logging out: ".$asOut->getLabel();
+    $ret = $task->addTimeSpent($user, 0);
+    return $ret;
 
 }

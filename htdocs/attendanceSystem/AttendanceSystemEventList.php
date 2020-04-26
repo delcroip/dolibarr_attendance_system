@@ -164,7 +164,17 @@ $formproject = new FormProjets($db);
          if ($ret == 'html') print '<br />';
          //to have the object to be deleted in the background\
         }
-      
+    break;
+    case 'generateTimeSpent':
+        $ret = parseSystemEvent();
+       if($ret['ok'] > 0){
+            setEventMessage($langs->trans('TimeSpentCreated').$ret['ok'], 'mesgs');
+       }
+       if($ret['ko'] > 0){
+            setEventMessage($langs->trans('EventErrors').$ret['ko'], 'errors');
+       }       
+
+    break;
     } 
 
 /***************************************************
@@ -174,6 +184,7 @@ $formproject = new FormProjets($db);
 ****************************************************/
 
 llxHeader('', 'AttendanceSystemEvent','');
+if($action != "")echo "<script>window.history.pushState('', '', '".explode('?', $_SERVER['REQUEST_URI'], 2)[0]."');</script>";
 print "<div> <!-- module body-->";
 
 $fuser = new User($db);
@@ -351,6 +362,8 @@ if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST))
     print '</form>'."\n";
     // new button
     print '<a href = "AttendanceSystemEventCard.php?action=create" class = "butAction" role = "button">'.$langs->trans('New');
+    //create timespent 
+    print '<a href = "?action=generateTimeSpent" class = "butAction" role = "button">'.$langs->trans('GenerateTimeSpent');
     print ' '.$langs->trans('AttendanceSystemEvent')."</a>\n";
 
     
