@@ -568,7 +568,7 @@ class AttendanceSystemEvent extends CommonObject
 		$sql .= ' fk_attendance_event = '.(empty($this->attendance_event) != 0 ? 'null':"'".$this->attendance_event."'").',';
 		$sql .= ' fk_user = '.(empty($this->user) != 0 ? 'null':"'".$this->user."'").',';
 		$sql .= ' event_type = '.(empty($this->event_type) != 0 ? 'null':"'".$this->event_type."'").',';
-		$sql .= ' status = '.(empty($this->status) != 0 ? 'null':"'".$this->status."'").'';
+		$sql .= ' status = '.(empty($this->status) != 0 ? 'null':"'".$this->status."'").',';
 		$sql .= ' state = '.(empty($this->state) != 0 ? 'null':"'".$this->state."'").'';    
         return $sql;
     }
@@ -634,10 +634,10 @@ class AttendanceSystemEvent extends CommonObject
      * @return  int              OK
      */    
     public function loadFromArray($array){
-
+        //var_dump($array);
         // automatic unserialisation based on match between property name and key value
         foreach ($array as $key => $value) {
-            if(isset($this->{$key}))$this->{$key} = $value;
+            if(property_exists($this,$key))$this->{$key} = $value;
         }
     }
 
@@ -817,9 +817,14 @@ class AttendanceSystemEvent extends CommonObject
                     $status = 3; // error single
                 }elseif ($dur >= ($conf->global->ATTENDANCE_EVENT_MIN_DURATION)  // duration more than min
                         && $dur < ($conf->global->ATTENDANCE_EVENT_MAX_DURATION * 3600)){ // duration less that may
-                    if(createTimeSpend($inEvent, $event)>0)$ret++;
+                    $tasktime = createTimeSpend($inEvent, $event);
+                    if($tasktime>0){
+                        $eventIn['attendance_event'] = $tasktime;
+                        $event['attendance_event'] = $tasktime;
+                        $ret++;
+                    }
                     $status = 2; // out
-
+                    $prevStatus == 1;
                 }else if($event['event_type'] == 3){
                     $status = 6; // errorout
                     $prevStatus = 5; //error in
@@ -840,9 +845,10 @@ class AttendanceSystemEvent extends CommonObject
             }else{
                 $nbrEvent -= 1;
                 if ($prevStatus > 0){
-                    if($prevStatus == 1){
+                    if($prevStatus == 1 && $status != 2){ // 
                         $inEvent = $prevEvent;
-                    }elseif($prevStatus == 2){
+                    }
+                    elseif($prevStatus == 2){
                         $inEvent = null;
                     }else{
                         $nbrEvent -= 1;

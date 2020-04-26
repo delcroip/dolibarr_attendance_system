@@ -109,8 +109,8 @@ Once grouped per day and dolibarr user, the sytem will try to find out the in an
 Parsing Attendandance System Events steps:
   #. Fetch the first/next event (`in`)
   #. [in/out]: if this event is not an `in` event then put its status as **error** and restart from step : Fetch the first/next event (`in`)
-  #. NOT [in/out]: if *nbrEvent* is odd and there is event before, if the duration between those event is **smaller** than `minSecondsPerEvent` then put the  event as **error** and restart from step : Fetch the first/next event (`in`)
-  #. Fetch the next  event (`out`)
+  #. NOT [in/out]: if *nbrEvent* is odd and there is event before, if the duration between those event is **smaller** than `minSecondsPerEvent` then put the  event as **error** and restart from this step (in) : Fetch the next event (`in`)
+  #. Fetch the next  event (`out`) // fixme if out then error 5/6 if hearthbear 1/3
   #. [in/out]: if this event is an `in` event then put the first `in` as **error** and restart from step : Fetch the next  event (`out`) 
   #. If the duration between `in`and `out` events is **bigger** than `maxHoursPerEvent` or **smaller** than `minSecondsPerEvent`then put the `in` and `out`event as **error**
   #. Create a pair of attendance event using the *project* and *task* from the in event

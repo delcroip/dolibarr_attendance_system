@@ -586,7 +586,7 @@ class AttendanceSystemUserLink extends CommonObject
         }
         // automatic unserialisation based on match between property name and key value
         foreach ($array as $key => $value) {
-            if(isset($this->{$key}))$this->{$key} = $value;
+            if(property_exists($this,$key))$this->{$key} = $value;
         }
     }
 
