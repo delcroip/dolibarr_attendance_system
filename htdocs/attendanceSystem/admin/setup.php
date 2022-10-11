@@ -95,6 +95,7 @@ echo '<div class = "fiche"><br><br>';
 
 print_titre($langs->trans("GeneralOption"));
 echo '<form name = "settings" action="?action=save" method = "POST" >'."\n\t";
+echo '<input type="hidden" name="token" value="'.newToken().'">';
 echo '<table class = "noborder" width = "100%">'."\n\t\t";
 echo '<tr class = "liste_titre" width = "100%" ><th width = "200px">'.$langs->trans("Name").'</th><th>';
 echo $langs->trans("Description").'</th><th width = "100px">'.$langs->trans("Value")."</th></tr>\n\t\t";
